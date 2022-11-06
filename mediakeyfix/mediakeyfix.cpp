@@ -18,8 +18,9 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nS
     AllocConsole();
     freopen("CONOUT$", "w", stdout);
     freopen("CONIN$", "r", stdin);
+#else
+    Sleep(10000);
 #endif
-
     winrt::init_apartment();
     session_manager = GlobalSystemMediaTransportControlsSessionManager::RequestAsync().get();
 
@@ -68,10 +69,14 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam
             if (dwSize > 0) {
                 RAWINPUT* raw = (RAWINPUT*)malloc(dwSize);
                 if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, raw, &dwSize, sizeof(RAWINPUTHEADER)) == dwSize) {
-                    if (raw->header.dwType == RIM_TYPEKEYBOARD && raw->data.keyboard.Message == WM_KEYUP) {
+                    if (raw->header.dwType == RIM_TYPEKEYBOARD && raw->data.keyboard.Message == WM_KEYUP
+                            && (raw->data.keyboard.VKey == VK_MEDIA_PLAY_PAUSE || raw->data.keyboard.VKey == VK_MEDIA_NEXT_TRACK || raw->data.keyboard.VKey == VK_MEDIA_PREV_TRACK)) {
+                        auto s = session_manager.GetCurrentSession();
+                        if (!s)
+                            break;
+
                         switch (raw->data.keyboard.VKey) {
                             case VK_MEDIA_PLAY_PAUSE: {
-                                auto s = session_manager.GetCurrentSession();
                                 switch (s.GetPlaybackInfo().PlaybackStatus()) {
                                     case GlobalSystemMediaTransportControlsSessionPlaybackStatus::Playing:
                                         s.TryPauseAsync();
@@ -85,11 +90,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam
                                 }
                             } break;
                             case VK_MEDIA_NEXT_TRACK: {
-                                session_manager.GetCurrentSession().TrySkipNextAsync();
+                                s.TrySkipNextAsync();
                                 std::cout << "Next" << std::endl;
                             } break;
                             case VK_MEDIA_PREV_TRACK: {
-                                session_manager.GetCurrentSession().TrySkipPreviousAsync();
+                                s.TrySkipPreviousAsync();
                                 std::cout << "Prev" << std::endl;
                             } break;
                         }
