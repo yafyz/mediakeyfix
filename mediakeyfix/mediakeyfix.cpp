@@ -77,8 +77,8 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam
 
                         switch (raw->data.keyboard.VKey) {
                             case VK_MEDIA_PLAY_PAUSE: {
-                                std::cout << "Toggle" << std::endl;
                                 s.TryTogglePlayPauseAsync();
+                                std::cout << "Toggle" << std::endl;
                             } break;
                             case VK_MEDIA_NEXT_TRACK: {
                                 s.TrySkipNextAsync();
